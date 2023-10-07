@@ -25,7 +25,7 @@ def mGetNodeConnection(inNode, direction, excludeSelf=False) ->  om2.MSelectionL
 	mGetNodeConnection
 	utility function for maya
 
-	returns list of nodes connected to selected node, querying direction required
+	returns list of connections to selected node, querying direction required
 	
 	:param inNode:		expects om2.MObject, has soft fallback for om2.MSelectionList (no string, use select function first)
 	:param direction:	expects "upstream", "downstream", or just "up" or "down" - for querying up- or down-stream connections

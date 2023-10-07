@@ -1,5 +1,5 @@
 # rigStu
- one man's journey into maya's rigging ecosystem - more exploratory than complete
+ one person's journey into maya's rigging and scripting ecosystem - more exploratory than complete
 
 ### dev environment
 Windows 10

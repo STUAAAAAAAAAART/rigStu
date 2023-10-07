@@ -33,7 +33,7 @@ import maya.api.OpenMaya as om2
 
 
 class rigStu():
-	def __init__(self) -> None:
+	def __init__(self):
 		pass
 
 
