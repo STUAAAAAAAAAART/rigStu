@@ -3,9 +3,15 @@ from typing import List, NoReturn
 import maya.cmds as mc
 import maya.api.OpenMaya as om2
 
-class rigStu():
+class rigStu(): # see 00*.py
 	def __init__(self):
-		pass # see 00*.py
+		self.rigRoot = om2.MFnDagNode()
+		self.jointRoot = om2.MFnDagNode()
+		pass 
+	def rigRootName(self) -> str:
+		return self.rigRoot.fullPathName()
+	def jointRootName(self) -> str:
+		return self.jointRoot.fullPathName()
 
 #beginCode
 

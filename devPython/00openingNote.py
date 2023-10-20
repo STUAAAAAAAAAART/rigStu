@@ -62,6 +62,7 @@ class rigStu():
 		except:
 			raise ValueError ("class rigStu: rigRoot init fail - MFnDagNode operation fail:", jointRoot)
 	
-	
-	def jointRootName(self):
-
+	def rigRootName(self) -> str:
+		return self.rigRoot.fullPathName()
+	def jointRootName(self) -> str:
+		return self.jointRoot.fullPathName()
