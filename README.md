@@ -26,7 +26,7 @@ as of now, making this into a proper plugin is a lower priority, possibly would 
 
 as of now i've been using short underscored_ prefixes to tag nodes, but i'm still looking into maya's namespace editor and am contemplating on its possible use in this project. it gets more difficult if i end up grouping control node networks using a namespace, or at the very least figuring out the hierachy for them (completely flat? grouped according to outliner/DAG hierachy?). 
 
-|prefix|namespace?|description|
+|prefix (old)|namespace|description|
 |:---:|:---:|-----|
 |g_|g:|group|
 |c_|c:|control|

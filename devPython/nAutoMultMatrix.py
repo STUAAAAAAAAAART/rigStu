@@ -9,6 +9,8 @@ e.g.
 	for equation ABCDEFG = M
 	multMatrix.matrixIn[] requires inputs to be:
 		[G,F,E,D,C,B,A]
+
+
 """
 
 class rigStu(): # see 00*.py
@@ -17,15 +19,13 @@ class rigStu(): # see 00*.py
 		self.jointRoot = om2.MFnDagNode()
 		pass 
 
-	def mGetAttr(self, inList:om2.MSelectionList, attr:str) -> om2.MSelectionList:
-		pass # see function file
-
 #beginCode
 
 	def nAutoMultMatrix(self,
-					 	inputList:om2.MSelectionList, 
+						inputList:om2.MSelectionList, 
 						resultAttr:om2.MSelectionList,
-						reverseEval=False) -> om2.MSelectionList:
+						reverseEval=False,
+						noOutput=False) -> om2.MSelectionList:
 		"""
 		nAutoMultMatrix
 		utility function for maya
@@ -33,7 +33,7 @@ class rigStu(): # see 00*.py
 		selection syntax: [A,B,C,D...]
 			reverseEval False -> equation notation
 				("ABCD = M")
-			reverseEval True  -> evaluation direction
+			reverseEval True  -> evaluation direction (Maya)
 				(CD, then B, then A....)
 				(Maya multMatrix default)
 		
@@ -44,8 +44,9 @@ class rigStu(): # see 00*.py
 		see also: cmds.connectAttr() 
 		
 		:param inputList:	expects om2.MSelectionlist - MObjects of matrix attributes only
-		:param resultAttr:	expects om2.MSelectionList - single MObject containing result node.attr to connect to
+		:param resultAttr:	expects om2.MSelectionList - MObjects containing result node.attr to connect to
 		:param reverseEval:	expects True/False - see syntax
+		:param noOutput:	expects True/False - verbose: flag True to skip connecting output items. invalid or empty list will raise error
 
 		:return:	MSelectionList - MObject of multMatrix DG node
 		"""
@@ -56,12 +57,8 @@ class rigStu(): # see 00*.py
 		while not inIter.isDone():
 			try: inIter.getPlug()
 			except:
-				raise TypeError ("nAutoMultMatrix - item in MSList not an attribute: " + inIter.getStrings()[0])
+				raise TypeError ("nAutoMultMatrix - inputList item in MSList not an attribute: " + inIter.getStrings()[0])
 		del inIter
-
-		self.mGetAttr()
-
-		
 
 		# do the thing
 		sequence = inputList.getSelectionStrings()
@@ -75,34 +72,45 @@ class rigStu(): # see 00*.py
 		for attr in sequence:
 			try: mc.connectAttr(attr, multMatInput)
 			except:
-				raise TypeError( "nAutoMultMatrix - cmds.connectAttr operation failed:" )
+				raise TypeError( "nAutoMultMatrix - cmds.connectAttr to multMatrix operation failed:", attr)
+
+
+		if noOutput:
+			# no output. return node immediately
+			return om2.MSelectionList().add(multMat) # >> MSelectionList
+
 
 		# test for output
+		testPlug = None
 		try:
-			resultAttr.getSelectionStrings()
-			try:
-				# test if plug
-				testPlug = resultAttr.getPlug(0)
+			# test output MSL to ensure all of them are plugs
+			outIter = om2.MItSelectionList(resultAttr)
+			while not outIter.isDone():
+				try:
+					outIter.getPlug()
+				except:
+					raise TypeError ("nAutoMultMatrix - resultList item in MSList not an attribute: " + inIter.getStrings()[0])
+			del outIter
+		except:	# MSL operation failed
+			raise TypeError ("nAutoMultMatrix - om2.MSelectionList operation failed:", str(resultAttr))
+		
+		errors = []
+		for n in testPlug:
+			try: # test if attr is a matrix type (test before connecting)
+				if mc.getAttr(n ,type=True) != "matrix":
+					# TODO - keep a look out if there's ever an om2 version of mc.getAttr(type=True)? ._.
+					errors.append(n)
 			except:
-				print("nAutoMultMatrix - no valid attrs found in MSL, skipping output connection")
-				return om2.MSelectionList().add(multMat)
-			try:
-				# is plug; test if matrix attribute
-				testPlug.
-			except:
-				print( "nAutoMultMatrix - invalid output target, expected matrix attribute:", )
-		except:
-			print("nAutoMultMatrix - resultAttr MSL operation failed, skipping output connection")
-			return om2.MSelectionList().add(multMat)
+				errors.append(n)
 		
-		# any attr found, test if matrix
-		outAttr = resultAttr.getSelectionStrings()[0]
-		if ".m" not in outAttr:
-			print("nAutoMultMatrix - resultAttr not a matrix, skipping output connection")
+		if len(errors) > 0: # raise error if there are attributes that aren't matrices
+			raise TypeError ("nAutoMultMatrix - following attributes for output incompatible, stopping:", str(errors))
+		
+		# output list all good! connect them all! 
+		multMatOutput = multMat + ".matrixSum" # yes, this is what it's called
+		for n in testPlug:
+			mc.connectAttr(multMatOutput, n)
+		
 
-		# valid attr found 
-		
-		mc.connectAttr(multMat+"matrixOut" , )
-		return om2.MSelectionList().add(multMat)
-
-		
+		# finally
+		return om2.MSelectionList().add(multMat) # >> MSelectionList

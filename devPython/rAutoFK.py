@@ -11,7 +11,6 @@ namespace
 :r:simpleFK:
 	t:[joint]FK0
 	n:[joint]FK0_multMatrix
-	n:[joint]
 
 """
 
@@ -35,39 +34,82 @@ class rigStu(): # see 00*.py
 
 #beginCode
 
-	def rAutoFK(self, inJoint:om2.MSelectionList) -> om2.MSelectionList:
+	def rAutoFK(self,
+			inJoint:om2.MSelectionList,
+			parentGroup:om2.MSelectionList,
+			auto:bool = True
+			) -> om2.MSelectionList:
 		"""
 		rAutoFK
 		rigging operation for maya
 
 		simple FK controller, separate in DAG hierachy from the joint chain
 
-		:param inJoint:	expects om2.MSeletionList - list of joints to apply
-		
-		:return:	om2.MSelectionlist of created nodes, in consecutive order
+		return is om2.MSelectionList of the following order:
+			c:[joint] - control
+			t:[joint] - group
+			r:[namespace group]:n:multMatrix - node
+
+		:param inJoint:		expects om2.MSeletionList - list of joints to apply
+		:param parentGroup:	expects om2.MSeletionList - object to parent to
+		:param auto:		expects True/False - flag to either group this to autoFK, or 
+		:return:	om2.MSelectionlist of created nodes, see above
 		"""
-		#============= TODO check if Joint already has been autoFK
+		#============= TODO 1 check if inJoint has already been autoFK?
+		# dumb way: make string attribute in joint and insert namespace of rig operation group
+		# hard way: crawl DG network from joint to see connections to transforms and from matrices
+			# difficulty: working backwards from MPlugs to DG nodes is not straightforward
+
+		om2.MFnData().
+
+		#============= TODO 2 self.autoFK mobject?
+		autoFKgroup = om2.MSelectionList()
+		try:
+			# self.rigRootName() + "r:autoFK"
+			autoFKgroup.add("g:rigRoot|r:autoFK")
+		except:
+			newNode = mc.createNode("transform", name="r:autoFK", ss=True)
+			# newNode self.rigRootName()
+			mc.parent(newNode, "g:rigRoot")
+			autoFKgroup.add("g:rigRoot|r:autoFK")
+		
+		autoFKgroup = autoFKgroup.getDagPath(0)
+		autoFKgroup = om2.MFnDagNode(autoFKgroup)
+		#============= TODO 3 factor in for function being used for a switching system (not necessairly for autoFK)
+		# get parent group
+		# 	this is either "r:autoFK", or the rig operation namespace group
+		# gRootName = self.rigRootName()
+		gRootName = "g:rigRoot"
+
+
+		#=============
+
 
 		
-
-		# get rig root group
-		gRootName = self.rigRootName() # ->MFnDAG
+		
 		# get joint
-		jointObject = om2.MFnDagNode(inJoint.getDagPath()[0])
-		
+		jointObject = om2.MFnDagNode(inJoint.getDagPath()[0])		
 		jointName = jointObject.partialPathName()
 		# Returns the minimum path string necessary to uniquely identify the attached object.
 		
+		"""
+		joint:          j:elbow0   :bindRoot| [....] |j:elbow0
+		- DAG
+		group(control): t:elbow0    :rigRoot|r:autoFK|t:elbow0_FK
+		control:        c:elbow0_FK  :rigRoot|r:autoFK|t:elbow0|c:elbow0_FK
+		
+		- non-DAG
+		multMatrix:     r:autoFK:n:elbowFK_mxm
+		"""
+
+
 		# new t:group ->
-		"""
-		joint:			j:elbow0
-		control:		c:elbow0
-		group(control):	t:elbow0
-		"""
-		gControl = self.nCreateNode()
+		# gControl = self.nCreateNode( "transform", "t:"+jointName )
+		gControl = mc.createNode("transform", name="t:"+jointName ,ss=True)
 		
 		# parent to rig root group
-		mc.parent()
+		# self.mParent()
+		mc.parent(  )
 
 		# new c:control shape/curve ->
 		# parent to t: group
@@ -84,5 +126,4 @@ class rigStu(): # see 00*.py
 		
 		
 		self.nSetAttr()
-		
 		

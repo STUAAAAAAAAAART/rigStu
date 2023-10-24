@@ -1,3 +1,13 @@
+"""
+TODO proper __init__ and workflow decision:
+
+- base file: skeleton and mesh, bind skin
+- workfile: base file (referenced)
+- construction script (JSON?): flat rigging operations
+
+"""
+
+
 #beginCode
 """
 STUART LIM LEARNS TO RIG
@@ -30,38 +40,54 @@ import maya.cmds as mc
 import maya.api.OpenMaya as om2
 
 class rigStu():
-	def __init__(self, rigRoot:str, jointRoot:str):
+	def __init__(self, new:bool=True):
+		"""
+		class rigStu
+
+		__init__
+		class expects the following baseline, either created new, or existing in scene
+
+
+		:param new:	expects True/False: True make required nodes, or False get from scene  
+		"""
+		
 		"""
 		class initialisation
-		self.rigRoot	<- om2.MFnDagNode - function of rigRoot transform/group DAG node
-		self.jointRoot	<- om2.MFnDagNode - function of jointRoot transform/group DAG node
+		self.rigRoot	<- om2.MFnDagNode - function of g:rigRoot transform/group DAG node
+		self.jointRoot	<- om2.MFnDagNode - function of j:jointRoot transform/group DAG node
 		"""
-		self.rigRoot = om2.MSelectionList()
+
+		self.rigRoot = om2.MSelectionList() # expects transform/group "rigRoot"
+		self.jointRoot = om2.MSelectionList() # expects joint ""
+
 		try:
-			self.rigRoot.add(rigRoot)
+			self.jointRoot.add("j:jointRoot") # -> if missing, raises (kInvalidParameter): Object does not exist
 		except:
-			raise TypeError("class rigStu: rigRoot init fail - scene does not contain object:", rigRoot)
-		try: # test if root is parent of world (i.e. not a child of another DAG object)
-			self.rigRoot = self.rigRoot.getDagPath(0)
-			self.rigRoot = om2.MFnDagNode(self.rigRoot)
-			if self.rigRoot.parentCount() > 0:
-				raise ValueError ("class rigStu: rigRoot init fail - target not child of World (unparented):", rigRoot)
-		except:
-			raise ValueError ("class rigStu: rigRoot init fail - MFnDagNode operation fail:", rigRoot)
-		
-		self.jointRoot = om2.MSelectionList()
-		try:
-			self.jointRoot.add(jointRoot)
-		except:
-			raise TypeError("class rigStu: jointRoot init fail - scene does not contain object:", jointRoot)
+			raise TypeError("class rigStu: jointRoot init fail - scene does not contain joint root 'j:jointRoot' ")
 		try: # test if root is parent of world (i.e. not a child of another DAG object)
 			self.jointRoot = self.jointRoot.getDagPath(0)
 			self.jointRoot = om2.MFnDagNode(self.jointRoot)
 			if self.jointRoot.parentCount() > 0:
-				raise ValueError ("class rigStu: rigRoot init fail - target not child of World (unparented):", jointRoot)
+				raise ValueError ("class rigStu: jointRoot init fail - j:jointRoot not child of World (unparented):")
 		except:
-			raise ValueError ("class rigStu: rigRoot init fail - MFnDagNode operation fail:", jointRoot)
-	
+			raise ValueError ("class rigStu: jointRoot init fail - MFnDagNode operation fail (j:jointRoot)")
+
+		try:
+			self.rigRoot.add("g:rigRoot") # -> if missing, raises (kInvalidParameter): Object does not exist
+		except:
+			if new:
+				self.rigRoot.add( mc.createNode("transform", name="g:rigRoot") )
+			else:
+				raise TypeError("class rigStu: rigRoot init fail - scene does not contain 'g:rigRoot'")
+		try: # test if root is parent of world (i.e. not a child of another DAG object)
+			self.rigRoot = self.rigRoot.getDagPath(0)
+			self.rigRoot = om2.MFnDagNode(self.rigRoot)
+			if self.rigRoot.parentCount() > 0:
+				raise ValueError ("class rigStu: rigRoot init fail - 'g:rigRoot' not child of World (unparented):")
+		except:
+			raise ValueError ("class rigStu: rigRoot init fail - MFnDagNode operation fail (g:rigRoot)")
+		
+
 	def rigRootName(self) -> str:
 		return self.rigRoot.fullPathName()
 	def jointRootName(self) -> str:
