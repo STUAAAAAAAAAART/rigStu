@@ -7,6 +7,40 @@ TODO proper __init__ and workflow decision:
 
 """
 
+"""
+TODO reconsider use of n:namespaces...?
+
+unreal engine removes maya namespaces on FBX import
+although this only affects bind joints and meshes in practice (export animated FBX)
+
+also, a "soft namespace"(?) approach is already in use with transfrom groups
+example outliner / DAG tree: (imagine n:something as n_something)
+-------------
+>>	rigRoot
+>>		r:autoFK
+			t:joint0_FK
+				c:joint0_FK
+			t:joint1_FK
+				c:joint1_FK
+>>		r:leftArm0_FKIK
+			t:ikLogicJoints
+				j:leftArm0_ikJoint0
+					j:leftArm0_ikJoint1
+						j:leftArm0_ikJoint2
+				c:leftArm0_IK
+					n:leftArm0_ikHandle
+				c:leftArm0_PV
+			t:shoulderLeft0
+				c:shoulderLeft0_FK
+			t:elbowLeft0
+				c:elbowLeft0_FK
+			t:forearmLeft0
+				c:forearmLeft0_FK
+-------------			
+
+
+"""
+
 
 #beginCode
 """
@@ -56,39 +90,65 @@ class rigStu():
 		self.rigRoot	<- om2.MFnDagNode - function of g:rigRoot transform/group DAG node
 		self.jointRoot	<- om2.MFnDagNode - function of j:jointRoot transform/group DAG node
 		"""
+		
+		self.jointRoot = om2.MSelectionList()	# expects joint "root"
+		self.rigRoot = om2.MSelectionList()		# expects transform/group "rigRoot"
+		self.autoFKgroup = om2.MSelectionList()	# expects transform/group "r:autoFK"
 
-		self.rigRoot = om2.MSelectionList() # expects transform/group "rigRoot"
-		self.jointRoot = om2.MSelectionList() # expects joint ""
+		initJointRoot = "root"
+		initRigRoot = "rigRoot"
+		initAutoFK = "r:autoFK"
 
+		# ============= init jointRoot
 		try:
-			self.jointRoot.add("j:jointRoot") # -> if missing, raises (kInvalidParameter): Object does not exist
+			self.jointRoot.add(initJointRoot) # -> if missing, raises (kInvalidParameter): Object does not exist
+			# check if joint, in case of multiple 
+			if self.jointRoot.getDependNode(0).apiType() != om2.MFn.kJoint:
+				raise TypeError(f"class rigStu: {initJointRoot} init fail - scene does not contain joint root 'root' ")
 		except:
-			raise TypeError("class rigStu: jointRoot init fail - scene does not contain joint root 'j:jointRoot' ")
+			raise TypeError(f"class rigStu: {initJointRoot} init fail - scene does not contain joint root 'root' ")
 		try: # test if root is parent of world (i.e. not a child of another DAG object)
 			self.jointRoot = self.jointRoot.getDagPath(0)
 			self.jointRoot = om2.MFnDagNode(self.jointRoot)
 			if self.jointRoot.parentCount() > 0:
-				raise ValueError ("class rigStu: jointRoot init fail - j:jointRoot not child of World (unparented):")
+				raise ValueError (f"class rigStu: {initJointRoot} init fail - {initJointRoot} not child of World (unparented):")
 		except:
-			raise ValueError ("class rigStu: jointRoot init fail - MFnDagNode operation fail (j:jointRoot)")
+			raise ValueError (f"class rigStu: {initJointRoot} init fail - MFnDagNode operation fail ({initJointRoot})")
 
+		# ============= init rigRoot
 		try:
-			self.rigRoot.add("g:rigRoot") # -> if missing, raises (kInvalidParameter): Object does not exist
+			self.rigRoot.add(initRigRoot) # -> if missing, raises (kInvalidParameter): Object does not exist
 		except:
 			if new:
-				self.rigRoot.add( mc.createNode("transform", name="g:rigRoot") )
+				self.rigRoot.add( mc.createNode("transform", name=initRigRoot, ss=True) )
 			else:
-				raise TypeError("class rigStu: rigRoot init fail - scene does not contain 'g:rigRoot'")
+				raise TypeError(f"class rigStu: {initRigRoot} init fail - scene does not contain '{initRigRoot}'")
 		try: # test if root is parent of world (i.e. not a child of another DAG object)
 			self.rigRoot = self.rigRoot.getDagPath(0)
 			self.rigRoot = om2.MFnDagNode(self.rigRoot)
 			if self.rigRoot.parentCount() > 0:
-				raise ValueError ("class rigStu: rigRoot init fail - 'g:rigRoot' not child of World (unparented):")
+				raise ValueError (f"class rigStu: {initRigRoot} init fail - '{initRigRoot}' not child of World (unparented):")
 		except:
-			raise ValueError ("class rigStu: rigRoot init fail - MFnDagNode operation fail (g:rigRoot)")
+			raise ValueError (f"class rigStu: {initRigRoot} init fail - MFnDagNode operation fail ({initRigRoot})")
 		
+		# ============= init autoFKgroup
+		try:
+		#	self.autoFKgroup.add(       "rigRoot|autoFK"      )
+			self.autoFKgroup.add(f"{initRigRoot}|{initAutoFK}")
+		except:
+			newNode = mc.createNode("transform", name=initAutoFK, ss=True)
+			mc.parent(newNode,initRigRoot)
+			self.autoFKgroup.add(f"{initRigRoot}|{initAutoFK}")
+		try:
+			self.autoFKgroup = self.autoFKgroup.getDagPath(0)
+			self.autoFKgroup = om2.MFnDagNode(self.autoFKgroup)
+		except:
+			raise ValueError (f"class rigStu: {initAutoFK} init fail - MFnDagNode operation fail, check scene again ({initRigRoot})")
 
+	# ============= functions
 	def rigRootName(self) -> str:
 		return self.rigRoot.fullPathName()
 	def jointRootName(self) -> str:
 		return self.jointRoot.fullPathName()
+	def autoFKName(self) -> str:
+		return self.autoFKgroup.fullPathName()

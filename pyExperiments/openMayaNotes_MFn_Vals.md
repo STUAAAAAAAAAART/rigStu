@@ -4,6 +4,9 @@ om2.MFn()
 
 # TODO : look up functions/methods that query the MFn type of an MObject(? DG node?)
 
+# querying an MObject for type
+om2.MSelectionList().getDependNode(n) # >> returns nth item as dependency node MObject pointer
+om2.Mobject.apiType() # >> returns one of the following ints
 
 ```
 

@@ -81,34 +81,39 @@ class rigStu(): # see 00*.py
 
 
 		# test for output
-		testPlug = None
+		errors = []
+		attrList = []
 		try:
-			# test output MSL to ensure all of them are plugs
+			# test output MSL to ensure all of them are plugs of matrix type
 			outIter = om2.MItSelectionList(resultAttr)
 			while not outIter.isDone():
+				hasError = False				
 				try:
-					outIter.getPlug()
+					# ============= see pyExperiments/openMayaNotes_MFnData_Vals.md
+					if outIter.getPlug().asMDataHandle().type() != om2.MFnData.kMatrix:
+						hasError = True # not matrix attribute type
+					else:
+						attrList.append( outIter.getStrings()[0] )
+						# test passed, next item
+						outIter.next()
+						continue
 				except:
-					raise TypeError ("nAutoMultMatrix - resultList item in MSList not an attribute: " + inIter.getStrings()[0])
+					check= True # om2 MPlug MDataHandle operation chain failed
+					pass
+				if hasError:
+					errors.append( outIter.getStrings()[0] )
+				outIter.next()
 			del outIter
 		except:	# MSL operation failed
 			raise TypeError ("nAutoMultMatrix - om2.MSelectionList operation failed:", str(resultAttr))
-		
-		errors = []
-		for n in testPlug:
-			try: # test if attr is a matrix type (test before connecting)
-				if mc.getAttr(n ,type=True) != "matrix":
-					# TODO - keep a look out if there's ever an om2 version of mc.getAttr(type=True)? ._.
-					errors.append(n)
-			except:
-				errors.append(n)
-		
+
+		# check for any erros caught
 		if len(errors) > 0: # raise error if there are attributes that aren't matrices
 			raise TypeError ("nAutoMultMatrix - following attributes for output incompatible, stopping:", str(errors))
 		
 		# output list all good! connect them all! 
 		multMatOutput = multMat + ".matrixSum" # yes, this is what it's called
-		for n in testPlug:
+		for n in attrList:
 			mc.connectAttr(multMatOutput, n)
 		
 

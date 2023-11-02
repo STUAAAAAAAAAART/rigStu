@@ -22,6 +22,12 @@ while it is possible for action commands to be written in openMaya, my current u
 
 as of now, making this into a proper plugin is a lower priority, possibly would be the phase after making a more complete set of commands, and also after making an in-maya window for it.
 
+## command flow and intent
+
+the functions within are designed in a way that all maya selections and pointers to objects are handled through om2.MSelectionList, in hopes to reduce having to hunt for the syntax of the right demand (e.g. MFn for DG or DAG or Plug?) when calling a function from this library. 
+
+this might end up being a bad idea, i'll see
+
 ## node naming convention
 
 as of now i've been using short underscored_ prefixes to tag nodes, but i'm still looking into maya's namespace editor and am contemplating on its possible use in this project. it gets more difficult if i end up grouping control node networks using a namespace, or at the very least figuring out the hierachy for them (completely flat? grouped according to outliner/DAG hierachy?). 
@@ -36,7 +42,7 @@ as of now i've been using short underscored_ prefixes to tag nodes, but i'm stil
 |n_|r:"...":n:|DG-only node|
 |t_|r:"..."t:|pre-transform group|
 
-examples and more detail in [rigStu/devPython/nAutoRename.py](devPython/nAutoRename.py)
+examples and more detail in [rigStu/nodeNamingConvention.md](nodeNamingConvention.md)
 
 ## code acknowledgements
 
