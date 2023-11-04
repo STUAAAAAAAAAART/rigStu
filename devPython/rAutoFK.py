@@ -110,11 +110,11 @@ class rigStu(): # see 00*.py
 		"""
 		joint:          elbow0   root| [....] |elbow0
 		- DAG
-		group(control): t:elbow0     :rigRoot|r:autoFK|t:elbow0_FK
+		group(control): t:elbow0_FK  :rigRoot|r:autoFK|t:elbow0_FK
 		control:        c:elbow0_FK  :rigRoot|r:autoFK|t:elbow0_FK|c:elbow0_FK
 		
 		- non-DAG
-		multMatrix:     r:autoFK:n:elbowFK_mxm
+		multMatrix:     n:elbowFK_mxm
 		"""
 		# all clear
 		# ============= do the thing  
@@ -123,18 +123,17 @@ class rigStu(): # see 00*.py
 		while not jointListIter.isDone():
 			returnMSL = om2.MSelectionList()
 
-			jointName = om2.MFnDagNode(jointListIter.getDagPath())
+			jointName = om2.MFnDagNode(jointListIter.getDagPath()).partialPathName()
 			# == new t:group ->
 			# gControl = self.nCreateNode( "transform", "t:"+jointName )
-			gControl = mc.createNode("transform", name="t:"+jointName ,ss=True)	
+			gControl = mc.createNode("transform", name=f"t:{jointName}_FK",ss=True)	
 
 			# == parent to operation group
 			# self.mParent()
 			mc.parent(gControl , opGroup )
 
 			# == new c:control shape/curve ->
-			cControl = "c:" + jointName +"_FK"
-			cControl = mc.circle(name = cControl, nr=[1,0,0], ch = False)
+			cControl = mc.circle(name = f"c:{jointName}_FK", nr=[1,0,0], ch = False)
 			# parent to t:gControl
 			mc.parent( cControl , gControl )
 			returnMSL.add(cControl)
@@ -152,7 +151,7 @@ class rigStu(): # see 00*.py
 
 			nMultiply = self.nAutoMultMatrix(mxmInput,mxmOutput) # >> om2.MSL of multMatrixNode
 			nMultName = (nMultiply.getSelectionStrings()[0])
-			mc.rename(nMultName,f"")
+			mc.rename(nMultName,f"n:{jointName}_mxm")
 			returnMSL.merge(nMultiply)
 
 			# connect c:control.rotate to joint.rotate
