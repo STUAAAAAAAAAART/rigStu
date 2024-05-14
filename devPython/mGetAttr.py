@@ -25,7 +25,7 @@ class rigStu(): # see 00*.py
 		:param inList:	expects MSelectionList of nodes, NOT MPlugs (refer to mConnect for explanation)
 		:param attr:	expects string - to query and gather attributes
 		
-		:return:	om2.MSelectionList of attributes
+		:return:	om2.MSelectionList of attributes, use om2.MFnAttribute() on each
 
 		"""
 		
@@ -35,16 +35,16 @@ class rigStu(): # see 00*.py
 		getAttrErrors = []
 		while not mSelIter.isDone():
 			try:
+				# DG node extractor
 				DGFn = om2.MFnDependencyNode(mSelIter.getDependNode())
-				DGNodeName = mSelIter.getStrings()[0]
-				if not DGFn.hasAttribute(attr):
-					getAttrErrors.append(DGNodeName)
+				try:
+					plugAttr = DGFn.hasAttribute(attr) # >> MObject, attribute
+					mReturn.add(plugAttr)
+				except:
+					getAttrErrors.append(mSelIter.getStrings()[0])
 					mSelIter.next()
 					continue
-				else:
-					mReturn.add(DGNodeName + attr) # <- MObject "Node.attr"
 				mSelIter.next()
-
 			except:
 				raise TypeError("mGetAttr: MFnDependencyNode operation failed:",
 								mSelIter.getStrings())

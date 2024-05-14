@@ -58,22 +58,29 @@ class rigStu(): # see 00*.py
 			try: inIter.getPlug()
 			except:
 				raise TypeError ("nAutoMultMatrix - inputList item in MSList not an attribute: " + inIter.getStrings()[0])
+			inIter.next()
 		del inIter
 
 		# do the thing
 		sequence = inputList.getSelectionStrings()
 		
 		if not reverseEval: # inputList is not in maya's multMatrix order
-			sequence = list(sequence).reverse()
+			sequence = list(sequence)
+			sequence.reverse()
 		
 		multMat = mc.createNode("multMatrix")
-		multMatInput = multMat + ".matrixIn"
+		multMatInput = f"{multMat}.matrixIn"
+		intDex = 0
 		
 		for attr in sequence:
-			try: mc.connectAttr(attr, multMatInput)
+			# IMPORTANT FOR ATTRIBUTE-ARRAYS[n]: INDEX MUST BE SPECIFIED, connectAttr() IS NOT SMART
+			# TODO: look into nextAvailable flag in connectAttr() and why it's refusing to work
+			try:
+				mc.connectAttr(attr, f"{multMatInput}[{intDex}]")
+				intDex += 1
 			except:
 				raise TypeError( "nAutoMultMatrix - cmds.connectAttr to multMatrix operation failed:", attr)
-
+		del intDex
 
 		if noOutput:
 			# no output. return node immediately
@@ -83,22 +90,27 @@ class rigStu(): # see 00*.py
 		# test for output
 		errors = []
 		attrList = []
+		multOutAttr = om2.MSelectionList()
+		multOutAttr.add(f"{multMat}.matrixSum")
+		multOutAttr = om2.MFnAttribute(multOutAttr.getPlug(0).attribute())
 		try:
-			# test output MSL to ensure all of them are plugs of matrix type
+			# test output MSL to ensure all of them can connect
 			outIter = om2.MItSelectionList(resultAttr)
 			while not outIter.isDone():
 				hasError = False				
 				try:
 					# ============= see pyExperiments/openMayaNotes_MFnData_Vals.md
-					if outIter.getPlug().asMDataHandle().type() != om2.MFnData.kMatrix:
-						hasError = True # not matrix attribute type
-					else:
+					plugAttr = om2.MFnAttribute(outIter.getPlug().attribute())
+					if multOutAttr.acceptsAttribute(plugAttr):
 						attrList.append( outIter.getStrings()[0] )
 						# test passed, next item
 						outIter.next()
 						continue
+					else:
+						hasError = True # not matrix attribute type that .matrixSum expects
+
 				except:
-					check= True # om2 MPlug MDataHandle operation chain failed
+					hasError= True # om2 MPlug MDataHandle operation chain failed
 					pass
 				if hasError:
 					errors.append( outIter.getStrings()[0] )
@@ -111,8 +123,8 @@ class rigStu(): # see 00*.py
 		if len(errors) > 0: # raise error if there are attributes that aren't matrices
 			raise TypeError ("nAutoMultMatrix - following attributes for output incompatible, stopping:", str(errors))
 		
-		# output list all good! connect them all! 
-		multMatOutput = multMat + ".matrixSum" # yes, this is what it's called
+		# output list all good! connect them all!
+		multMatOutput = f"{multMat}.matrixSum" # yes, this is what it's called
 		for n in attrList:
 			mc.connectAttr(multMatOutput, n)
 		

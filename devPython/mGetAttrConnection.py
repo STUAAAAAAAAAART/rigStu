@@ -7,6 +7,16 @@ from typing import List, NoReturn
 import maya.cmds as mc
 import maya.api.OpenMaya as om2
 
+""" TODO
+e.g. a multMatrix node has an array of inputs
+with only the name of the main attribute (.attr) and not of its elements (.attr[5])
+find out how to get all the connections
+and return as a list in index ascending order
+
+note that maya does not resilver plugs on arrays with gaps in the indices
+see mResilverConnections()
+"""
+
 #beginCode
 
 def mGetAttrConnection(inPlug:om2.MSelectionList, direction) -> om2.MSelectionList:
@@ -45,12 +55,4 @@ def mGetAttrConnection(inPlug:om2.MSelectionList, direction) -> om2.MSelectionLi
 	# ============= function
 	returnPlugs = om2.MSelectionList() # -> MSelectionList: create return object
 
-	""" TODO
-	e.g. a multMatrix node has an array of inputs
-	with only the name of the main attribute (.attr) and not of its elements (.attr[5])
-	find out how to get all the connections
-	and return as a list in index ascending order
-
-	note that maya does not resilver plugs on arrays with gaps in the indices
-	see mResilverConnections()
-	"""
+	

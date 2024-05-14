@@ -30,6 +30,11 @@ motivation:
 
 """
 
+"""
+there is a difference between an MPlug class
+and an attribute function extracted with MFnAttribute
+"""
+
 """ TODO
 when querying connections, the plug may belong to a multi-attribute
 joint4.matrix -> mxmTestAttr0.matrixIn[0]
@@ -39,76 +44,106 @@ or breaking all connections to the multi-attribute
 
 """
 
+# TODO: change plugs to MFnAttributes
+
 from typing import List, NoReturn
 
 import maya.cmds as mc
 import maya.api.OpenMaya as om2
 
+class rigStu(): # see 00*.py
+	def __init__(self):
+		self.rigRoot = om2.MFnDagNode()
+		self.jointRoot = om2.MFnDagNode()
+		self.autoFKgroup = om2.MFnDagNode()
+		pass
+	def rigRootName(self) -> str:
+		return self.rigRoot.fullPathName()
+	def jointRootName(self) -> str:
+		return self.jointRoot.fullPathName()
+	def autoFKName(self) -> str:
+		return self.autoFKgroup.fullPathName()
+
 #beginCode
 
-def mConnect(list:om2.MSelectionList) -> NoReturn:
-	"""
-	mConnect
-	utility function for maya
+	def mConnect(self, list:om2.MSelectionList) -> NoReturn:
+		"""
+		mConnect
+		utility function for maya
 
-	connects two MObjects holding attributes,
-	according to default mc.connectAttr() settings
+		connects two MObjects holding attributes,
+		according to default mc.connectAttr() settings
 
-	a longer MSelectionList will chain multiple connection commands
-	[from, to, from, to, from, to, ... ]
+		a longer MSelectionList will chain multiple connection commands
+		[from, to, from, to, from, to, ... ]
 
-	:param list:	expects om2.MSelectionList - list of from-to pairs of MObjects containing MPlugs
+		:param list:	expects om2.MSelectionList - list of from-to pairs of MObjects containing attributes
 
-	"""
-	mIter = om2.MItSelectionList(list)
-	while not mIter.isDone():
-		# fromAttr->
-		fromAttr = mIter.getStrings()[0]
-		mIter.next()
-		if mIter.isDone(): break # because there is nothing left to connect to
-		# ->toAttr
-		toAttr = mIter.getStrings()[0]
+		"""
+		mIter = om2.MItSelectionList(list)
+		while not mIter.isDone():
+			# fromAttr->
+			fromAttr = mIter.getStrings()[0]
+			mIter.next()
+			if mIter.isDone(): break # because there is nothing left to connect to
+			# ->toAttr
+			toAttr = mIter.getStrings()[0]
+			try:
+				mc.connectAttr(fromAttr, toAttr)
+			except:
+				raise("mConnect - mc.connectAttr operation failed, check work before debugging:", fromAttr,"->", toAttr)
+			mIter.next()
+			
+
+		return
+
+
+	def mConnectStr(self, fromPlug:str, toPlug:str) -> NoReturn:
+		"""
+		mConnectStr
+		lazy function for maya
+
+		see mConnect
+		this function is fall-forward to mConnect()
+		by taking in name string to test for MPlug, and then passed to mc.connectAttr()
+
+		:param fromPlug:	expects str - name of source plug
+		:param toPlug:		expects str - name of destination plug
+
+		"""
+		testPlug = []
+		for i in [fromPlug,toPlug]:
+			getPlug = om2.MSelectionList().add(i)
+				# new MSL
+				# add MObject via string, !! raises error if not available
+			try:
+				getPlug.getPlug(0) # -> MPlug: just a test
+				# get MPlug in MObject, !! raises error if not an MPlug
+				# WARNING: MPlug NAME FUNCTIONS RETURNS RELATIVE NAME.ATTR, 
+				# 	AND DOES NOT AUTORESOLVE FOR DAG PATH,
+				#	MAKING THIS PRONE TO ERRORS WHEN DAG OBJECTS
+				#	HAS IDENTICAL DAG SHORTNAMES
+				# this is why i'm not utilising the MPlug
+				#	and instead am falling back to the full DAG path
+			except:
+				raise TypeError("mConnectStr - MPlug not found from string:", i)
+			testPlug.append(getPlug.getSelectionStrings()[0])
 		try:
-			mc.connectAttr(fromAttr, toAttr)
+			mc.connectAttr(testPlug[0], testPlug[1])
 		except:
-			raise("mConnect - mc.connectAttr operation failed, check work before debugging:", fromAttr,"->", toAttr)
-		mIter.next()
-		
-
-	return
+			raise("mConnectStr - mc.connectAttr operation failed, check work before debugging:", testPlug[0],"->", testPlug[1])
 
 
-def mConnectStr(fromPlug:str, toPlug:str) -> NoReturn:
+def mTap(self, list:om2.MSelectionList) -> NoReturn:
 	"""
-	mConnectStr
-	lazy function for maya
+		mTap
+		utility function for maya
 
-	see mConnect
-	this function is fall-forward to mConnect()
-	by taking in name string to test for MPlug, and then passed to mc.connectAttr()
+		connects and disconnects an attribute to multiple
 
-	:param fromPlug:	expects str - name of source plug
-	:param toPlug:		expects str - name of destination plug
+		a longer MSelectionList will tap one-to-many attributes
+		[from, to, to, to, ... ]
 
-	"""
-	testPlug = []
-	for i in [fromPlug,toPlug]:
-		getPlug = om2.MSelectionList().add(i)
-			# new MSL
-			# add MObject via string, !! raises error if not available
-		try:
-			getPlug.getPlug(0) # -> MPlug: just a test
-			# get MPlug in MObject, !! raises error if not an MPlug
-			# WARNING: MPlug NAME FUNCTIONS RETURNS RELATIVE NAME.ATTR, 
-			# 	AND DOES NOT AUTORESOLVE FOR DAG PATH,
-			#	MAKING THIS PRONE TO ERRORS WHEN DAG OBJECTS
-			#	HAS IDENTICAL DAG SHORTNAMES
-			# this is why i'm not utilising the MPlug
-			#	and instead am falling back to the full DAG path
-		except:
-			raise TypeError("mConnectStr - MPlug not found from string:", i)
-		testPlug.append(getPlug.getSelectionStrings()[0])
-	try:
-		mc.connectAttr(testPlug[0], testPlug[1])
-	except:
-		raise("mConnectStr - mc.connectAttr operation failed, check work before debugging:", testPlug[0],"->", testPlug[1])
+		:param list:	expects om2.MSelectionList - list of from-to pairs of MObjects containing attributes
+
+		"""

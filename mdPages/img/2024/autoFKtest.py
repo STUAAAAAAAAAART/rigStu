@@ -1,3 +1,8 @@
+# INSTRUCTIONS
+# - load the function definitions first
+# - select joints (not just the parent joint!!!)
+# - run the =script test= section at the end of this script 
+
 import maya.cmds as mc
 import maya.api.OpenMaya as om2
 
@@ -121,22 +126,13 @@ def rAutoFK(
 		returnMSL = om2.MSelectionList()
 
 		jointName = om2.MFnDagNode(jointListIter.getDagPath()).partialPathName()
-		# == new t:group ->
-		# gControl = self.nCreateNode( "transform", "t:"+jointName )
-#		gControl = mc.createNode("transform", name=f":t:{jointName}_FK",ss=True)	
-
-		# == parent to operation group
-		# self.mParent()
-#		mc.parent(gControl , opGroupDagPath )
-
+		
 		# == new c:control shape/curve ->
 		cControl = mc.circle(name = f":c:{jointName}_FK", nr=[1,0,0], ch = False)
 		cControl = cControl[0] #TODO: investigate list return for mc.circle
-		# parent to t:gControl
-#		mc.parent( cControl , gControl )
+		# == parent c:control to rigging operation opGroup
 		mc.parent( cControl , opGroupDagPath )
 		returnMSL.add(cControl)
-#		returnMSL.add(gControl)
 
 		# om2.MSL: A [rigRoot.worldInverse, joint.worldMatrix, control.inverseMatrix]
 		# om2.MSL: B [t:group.offsetParentMatrix]
@@ -161,27 +157,22 @@ def rAutoFK(
 
 		#============= cleanup
 		# lock and hide:
-		#	- c_control.translate
+		#	- c:control.translate
 		#	- gc_group .translate .rotate .scale
 		# TODO - nSetAttr (just make be following a lot more parametric)
-		# self.nSetAttr()
-		"""quickList = [
-			f"{cControl}.tx", f"{cControl}.ty", f"{cControl}.tz",
-			f"{gControl}.tx", f"{gControl}.ty", f"{gControl}.tz",
-			f"{gControl}.rx", f"{gControl}.ry", f"{gControl}.rz",
-			f"{gControl}.sx", f"{gControl}.sy", f"{gControl}.sz"
-		]""" # because channel box only displays separate axes and maya isn't that smart 
 		quickList = [
 			f"{cControl}.tx", f"{cControl}.ty", f"{cControl}.tz"
-		]
+		] # because channel box only displays separate axes and maya isn't that smart 
 		for attr in quickList:
 			mc.setAttr(attr, lock = True, keyable = False, channelBox = False)
-
+		#============= end cleanup
+		
 		returnList.append(returnMSL)
-		jointListIter.next()
+		jointListIter.next() # next (next)
 
-	# everything done
+	# ============= done the thing
 	return returnList
+# end rAutoFK()
 
     
 # maya script test, open a new python tab and run separately
@@ -189,7 +180,7 @@ def rAutoFK(
 
 # test for :rigRoot and r:autoFK, and namespace n:
 mc.namespace( set=':' )
-for nsp in [":r",":n"]:
+for nsp in [":r",":n",":c"]:
 	if not mc.namespace(exists=nsp):
 		mc.namespace(add=nsp)
 

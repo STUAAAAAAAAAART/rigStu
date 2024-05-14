@@ -85,7 +85,7 @@ class rigStu(): # see 00*.py
 		opGroupDagPath = ""
 		if auto:
 			opGroupDagPath = self.autoFKName()
-			opGroupShort = "autoFK"
+			opGroupShort = self.autoFKName().split(":")[-1]
 		else:
 			# reminder: make opGroup node then add to this function
 			opGroupDagPath = parentGroup.getDagPath(0).partialPathName()
@@ -108,7 +108,6 @@ class rigStu(): # see 00*.py
 				errorList.append(jointListIter.getStrings()[0])
 			# tests passed, continue
 			jointListIter.next()
-		
 		# if errors occured, raise error
 		if len(errorList) > 0:
 			raise TypeError ("rAutoFK - following input object(s) not a joint:", str(errorList))
@@ -116,13 +115,12 @@ class rigStu(): # see 00*.py
 		del errorList
 		
 		"""
-		- Existing DAG
-		joint:          elbow0       :root| [....] |elbow0
-		
-		- create DAG
+		joint:          elbow0   root| [....] |elbow0
+		- DAG
+		group(control): t:elbow0_FK  :rigRoot|r:autoFK|t:elbow0_FK
 		control:        c:elbow0_FK  :rigRoot|r:autoFK|t:elbow0_FK|c:elbow0_FK
 		
-		- create non-DAG
+		- non-DAG
 		multMatrix:     n:elbowFK_mxm
 		"""
 		# all clear
@@ -133,17 +131,25 @@ class rigStu(): # see 00*.py
 			returnMSL = om2.MSelectionList()
 
 			jointName = om2.MFnDagNode(jointListIter.getDagPath()).partialPathName()
-			
+			# == new t:group ->
+			# gControl = self.nCreateNode( "transform", "t:"+jointName )
+			gControl = mc.createNode("transform", name=f":t:{jointName}_FK",ss=True)	
+
+			# == parent to operation group
+			# self.mParent()
+			mc.parent(gControl , opGroupDagPath )
+
 			# == new c:control shape/curve ->
 			cControl = mc.circle(name = f":c:{jointName}_FK", nr=[1,0,0], ch = False)
 			cControl = cControl[0] #TODO: investigate list return for mc.circle
 			# parent to t:gControl
-			mc.parent( cControl , opGroupDagPath )
+			mc.parent( cControl , gControl )
 			returnMSL.add(cControl)
+			returnMSL.add(gControl)
 
-			# TODO: replace string formatting with mGetAttr() (or is this too much?)
+			# TODO: replace string formatting with mGetAttr()
 			# om2.MSL: A [rigRoot.worldInverse, joint.worldMatrix, control.inverseMatrix]
-			# om2.MSL: B [c:control.offsetParentMatrix]
+			# om2.MSL: B [t:group.offsetParentMatrix]
 			# == invoke nAutoMultMatrix with input MSL A result MSL B ->
 			mxmInput = om2.MSelectionList()
 			mxmInput.add(f"{gRootName}.worldInverseMatrix")
@@ -151,13 +157,12 @@ class rigStu(): # see 00*.py
 			mxmInput.add(f"{cControl}.inverseMatrix")
 
 			mxmOutput = om2.MSelectionList()
-			mxmOutput.add(f"{cControl}.offsetParentMatrix")
+			mxmOutput.add(f"{gControl}.offsetParentMatrix")
 
 			nMultiply = self.nAutoMultMatrix(mxmInput,mxmOutput) # >> om2.MSL of multMatrixNode
 			nMultName = (nMultiply.getSelectionStrings()[0])
 			mc.rename(nMultName,f":n:{opGroupShort}_{jointName}_mxm")
 			returnMSL.merge(nMultiply)
-			# == nAutoMultMatrix complete
 
 			#TODO nGetAttribute nConnect 
 			# connect c:control.rotate to joint.rotate
@@ -168,10 +173,14 @@ class rigStu(): # see 00*.py
 			#============= cleanup
 			# lock and hide:
 			#	- c_control.translate
+			#	- gc_group .translate .rotate .scale
 			# TODO - nSetAttr (just make be following a lot more parametric)
 			# self.nSetAttr()
 			quickList = [
-				f"{cControl}.tx", f"{cControl}.ty", f"{cControl}.tz"
+				f"{cControl}.tx", f"{cControl}.ty", f"{cControl}.tz",
+				f"{gControl}.tx", f"{gControl}.ty", f"{gControl}.tz",
+				f"{gControl}.rx", f"{gControl}.ry", f"{gControl}.rz",
+				f"{gControl}.sx", f"{gControl}.sy", f"{gControl}.sz"
 			] # because channel box only displays separate axes and maya isn't that smart 
 			for attr in quickList:
 				mc.setAttr(attr, lock = True, keyable = False, channelBox = False)

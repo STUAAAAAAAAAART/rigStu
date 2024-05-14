@@ -25,33 +25,33 @@ if there is a change in rig articulation or logic, consider how existing downstr
 
 ```
 root
-	hip
-		spine0
-			[...]
-		pelvis
-			[...]
+⤷ hip
+  ⤷ spine0
+	⤷ [...]
+	⤷ pelvis
+	  ⤷ [...]
 mesh
 
 rigRoot
-	r:autoFK
-		t:joint0_FK
-			c:joint0_FK
-		t:joint1_FK
-			c:joint1_FK
-	r:leftArm0_FKIK
-		t:ikLogicJoints
-			j:leftArm0_ikJoint0
-				j:leftArm0_ikJoint1
-					j:leftArm0_ikJoint2
-			c:leftArm0_IK
-				n:leftArm0_ikHandle
-			c:leftArm0_PV
-		t:shoulderLeft0
-			c:shoulderLeft0_FK
-		t:elbowLeft0
-			c:elbowLeft0_FK
-		t:forearmLeft0
-			c:forearmLeft0_FK
+⤷ r:autoFK
+  ⤷ t:joint0_FK
+	⤷ c:joint0_FK
+	  ⤷ t:joint1_FK
+		⤷ c:joint1_FK
+  ⤷ r:leftArm0_FKIK
+	⤷ t:ikLogicJoints
+	  ⤷	j:leftArm0_ikJoint0
+		⤷ j:leftArm0_ikJoint1
+		  ⤷ j:leftArm0_ikJoint2
+			⤷ c:leftArm0_IK
+			  ⤷ n:leftArm0_ikHandle
+		    ⤷ c:leftArm0_PV
+	⤷ t:shoulderLeft0
+	  ⤷ c:shoulderLeft0_FK
+	⤷ t:elbowLeft0
+	  ⤷ c:elbowLeft0_FK
+	⤷ t:forearmLeft0
+	  ⤷ c:forearmLeft0_FK
 ```
 
 ## Node Naming Convention
@@ -60,28 +60,28 @@ rigRoot
 - chains:
 ```
 spine0
-	spine1
-		spine2
+⤷ spine1
+  ⤷ spine2
 ```
 - chirality / sidedness / handedness<br>
 
 ```
-"legLeft0"
-	"kneeLeft0"
-		"ankleLeft0"
-"legRight0"
-	"kneeRight0"
-		ankleRight0"
+legLeft0
+⤷ kneeLeft0
+  ⤷ ankleLeft0
+legRight0
+⤷ kneeRight0
+  ⤷ ankleRight0
 ```
 - trees, e.g. extra limbs<br>
 no hard and fast rule, just note for animation reuse
 ```
-"shoulderLeft0"
-	"elbowLeft0"
-		"wristLeft0"
-"shoulderLeft1"
-	"elbowLeft1"
-		"wristLeft1"
+shoulderLeft0"
+⤷ elbowLeft0
+  ⤷ wristLeft0
+shoulderLeft1
+⤷ elbowLeft1
+  ⤷ wristLeft1
 ```
 
 ### control curves
