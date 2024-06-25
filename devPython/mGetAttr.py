@@ -38,7 +38,16 @@ class rigStu(): # see 00*.py
 				# DG node extractor
 				DGFn = om2.MFnDependencyNode(mSelIter.getDependNode())
 				try:
-					plugAttr = DGFn.hasAttribute(attr) # >> MObject, attribute
+					# playlist while coding:
+						# https://www.youtube.com/watch?v=XN758QmTus0
+					# om2.MFnDependencyNode().hasAttribute("name") -> bool
+						# has attr: True
+						# not attr: False
+					# om2.MFnDependencyNode().findPlug("name",False) -> MPlug
+						# has attr: MPlug class, access selection string with MPlug.name()
+						# not attr: !! raise kInvalidParameter
+					plugAttr = DGFn.findPlug(attr, False) # >> MObject, attribute
+						# not attr: !! raise kInvalidParameter, go to except
 					mReturn.add(plugAttr)
 				except:
 					getAttrErrors.append(mSelIter.getStrings()[0])
@@ -50,7 +59,7 @@ class rigStu(): # see 00*.py
 								mSelIter.getStrings())
 		
 		if len(getAttrErrors) > 0:
-			errorMsg = "mGetAttr: Attributes not found in the following:"
+			errorMsg = f"mGetAttr:  Attribute '.{attr}' not found in the following:"
 			for i in getAttrErrors:
 				errorMsg += "\n" + i
 			raise(errorMsg)

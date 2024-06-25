@@ -54,13 +54,36 @@ class rigStu(): # see 00*.py
 	def rAutoPV(inIKHandle:om2.MSelectionList) -> om2.MSelectionList:
 		"""
 		rAutoPV
+		utility function for maya
+		split out due to complexity, will be used within rAutoFKIK()
+
+		:return:	om2.MSelectionList of created nodes
+		"""
+
+		# create pole vector constraint node
+		# create c_control poleVector
+		# get from MSL: ikHandle
+		# mc Pole Vector Constraint
+		# return MSL
+
+	def rNoflipPV(inIKHandle:om2.MSelectionList) -> om2.MSelectionList:
+		"""
+		rAutoPV
 		rigging operation for maya
 		split out due to complexity, will be used within rAutoFKIK()
 
 		important note: see dev notes in devPython/nAutoRotateHelper.py
 
-		:return:	om2.MSelectionList of created nodes
+		:param capRig:	expects True/False - True to make as single PV control without blending, False to open-end to connect to downstream 
+
+		:return:	om2.MSelectionList of created nodes, of [controller, poleVectorConstraint, *other nodes*]
 		"""
+		# get from MSL:
+			# - IK controller (prefer controller over direct ikHandle)
+			# - IK Driver Joint logic: the base (0th) joint
+		
+		# optional if existing: get from MSL:
+			# - existing Pole Vector controller
 
 		# create pole vector constraint node
 		# create c_control noflip

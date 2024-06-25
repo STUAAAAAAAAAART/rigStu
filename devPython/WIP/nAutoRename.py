@@ -26,7 +26,7 @@ class rigStu(): # see 00*.py
 
 #beginCode
 
-	def nAutoRename(inNode, inRigSpace, newName:str, appendName:str = ""):
+	def nAutoRename(editNode, inRigSpace, newName:str, appendName:str = ""):
 		"""
 		nAutoRename
 		utility function for maya
@@ -34,3 +34,8 @@ class rigStu(): # see 00*.py
 		wrapper for maya's rename function, to conform to desired namespace
 		and keep mind off
 		"""
+
+		# get selection string
+		
+		# just do it, add to this later when verbosity required down the line
+		mc.rename()

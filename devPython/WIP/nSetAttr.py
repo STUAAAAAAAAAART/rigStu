@@ -38,10 +38,15 @@ class rigStu(): # see 00*.py
 
 def nSetAttr(inList:om2.MSelectionList , inAttr, inValue, skipMissing=False) -> NoReturn:
 	"""
+	nSetAttr
+	utility function for Maya
 
-	gets attributes of
+	gets attributes of MSL objects and sets them
 
+	:param inList:		MSelectionList of objects
+	:param inValue: 	<varies> new value
+	:param skipMissing:	bool 
 
-	:param *args:	expects run of om2.
+	:return:	MSelectionList of changed objects
 	"""
-def nSetAttrDAG()
+#def nSetAttrDAG()
